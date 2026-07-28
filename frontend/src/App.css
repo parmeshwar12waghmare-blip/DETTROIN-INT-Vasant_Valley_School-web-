@@ -1,0 +1,6 @@
+/* All component styles are in index.css via the enterprise design system. */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
