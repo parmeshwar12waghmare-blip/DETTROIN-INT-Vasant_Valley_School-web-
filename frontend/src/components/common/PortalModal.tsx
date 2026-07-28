@@ -1,34 +1,60 @@
 import React, { useState } from 'react';
-import { X, Lock, LogIn, UserCheck } from 'lucide-react';
+import { X, Lock, LogIn, Key, Sparkles } from 'lucide-react';
+import { loginERP } from '../../services/api';
+import type { ERPUser } from '../../types';
 
 interface PortalProps {
   isOpen: boolean;
   onClose: () => void;
+  onSuccessLogin: (user: ERPUser) => void;
 }
 
-export const PortalModal: React.FC<PortalProps> = ({ isOpen, onClose }) => {
-  const [role, setRole] = useState<'parent' | 'student' | 'teacher'>('parent');
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+export const PortalModal: React.FC<PortalProps> = ({ isOpen, onClose, onSuccessLogin }) => {
+  const [role, setRole] = useState<'parent' | 'student' | 'teacher'>('student');
+  const [username, setUsername] = useState('VVS-2026-981');
+  const [password, setPassword] = useState('password123');
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   if (!isOpen) return null;
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (username && password) {
-      setIsLoggedIn(true);
+    if (!username || !password) return;
+    
+    setIsLoading(true);
+    setErrorMessage('');
+    try {
+      const res = await loginERP(username, password, role);
+      if (res && res.success && res.user) {
+        onSuccessLogin(res.user);
+        onClose();
+      } else {
+        setErrorMessage(res?.message || 'Login failed. Check your Portal ID and password.');
+      }
+    } catch (err) {
+      setErrorMessage('Unable to connect to ERP server. Trying client cache...');
+    } finally {
+      setIsLoading(false);
     }
+  };
+
+  const autofillDemo = (r: 'student' | 'parent' | 'teacher') => {
+    setRole(r);
+    if (r === 'student') setUsername('VVS-2026-981');
+    if (r === 'parent') setUsername('VVS-PARENT-402');
+    if (r === 'teacher') setUsername('VVS-TCH-108');
+    setPassword('password123');
   };
 
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ background: 'rgba(17,17,17,0.75)', backdropFilter: 'blur(8px)' }}
+      style={{ background: 'rgba(11,15,25,0.82)', backdropFilter: 'blur(12px)' }}
     >
       <div
-        className="w-full max-w-md rounded-2xl p-7 sm:p-9 relative overflow-hidden"
-        style={{ background: '#FFFFFF', border: '1px solid #ECECEC', boxShadow: '0 16px 60px rgba(0,0,0,0.18)' }}
+        className="w-full max-w-md rounded-3xl p-7 sm:p-8 relative overflow-hidden"
+        style={{ background: '#FFFFFF', border: '1px solid #ECECEC', boxShadow: '0 20px 80px rgba(0,0,0,0.25)' }}
       >
         {/* Close */}
         <button
@@ -40,110 +66,94 @@ export const PortalModal: React.FC<PortalProps> = ({ isOpen, onClose }) => {
         </button>
 
         {/* Header */}
-        <div className="text-center space-y-2 mb-7">
+        <div className="text-center space-y-2 mb-6">
           <div
-            className="w-12 h-12 rounded-xl flex items-center justify-center mx-auto"
+            className="w-12 h-12 rounded-2xl flex items-center justify-center mx-auto shadow-md"
             style={{ background: '#F04424' }}
           >
             <Lock size={22} color="#fff" />
           </div>
-          <h3 className="text-2xl font-bold" style={{ color: '#111111' }}>School ERP Portal</h3>
-          <p className="text-xs" style={{ color: '#777777' }}>Access grades, attendance, fee vouchers & circulars</p>
+          <h3 className="text-2xl font-bold" style={{ color: '#111111' }}>School ERP Login</h3>
+          <p className="text-xs" style={{ color: '#777777' }}>
+            Access live student records, fee receipts & database queries
+          </p>
         </div>
 
-        {isLoggedIn ? (
-          <div className="text-center space-y-4 py-4">
-            <div
-              className="p-3 rounded-full w-14 h-14 mx-auto flex items-center justify-center"
-              style={{ background: 'rgba(240,68,36,0.1)' }}
-            >
-              <UserCheck size={30} style={{ color: '#F04424' }} />
-            </div>
-            <h4 className="text-lg font-bold" style={{ color: '#111111' }}>Welcome back, {username}!</h4>
-            <p className="text-xs" style={{ color: '#777777' }}>
-              Logged in as <strong style={{ color: '#F04424', textTransform: 'uppercase' }}>{role}</strong>
-            </p>
-            <div
-              className="p-4 rounded-xl text-left text-xs space-y-1"
-              style={{ background: '#FBF8F6', border: '1px solid #ECECEC', color: '#555555' }}
-            >
-              <p>• Recent Fee Receipt: Downloaded</p>
-              <p>• Term 1 Report Card: Available</p>
-              <p>• Next Parent Teacher Meeting: Aug 12</p>
-            </div>
-            <button
-              onClick={() => setIsLoggedIn(false)}
-              className="w-full py-2.5 rounded-xl text-xs font-bold transition cursor-pointer"
-              style={{ background: '#FBF8F6', color: '#555555', border: '1px solid #ECECEC' }}
-            >
-              Sign Out
-            </button>
+        {errorMessage && (
+          <div className="mb-4 p-3 rounded-xl bg-red-50 border border-red-200 text-red-600 text-xs text-center font-medium">
+            {errorMessage}
           </div>
-        ) : (
-          <form onSubmit={handleLogin} className="space-y-4">
-            {/* Role Switcher */}
-            <div
-              className="flex p-1 rounded-xl gap-1"
-              style={{ background: '#FBF8F6', border: '1px solid #ECECEC' }}
-            >
-              {(['parent', 'student', 'teacher'] as const).map((r) => (
-                <button
-                  type="button"
-                  key={r}
-                  onClick={() => setRole(r)}
-                  className="flex-1 py-2 rounded-lg text-xs font-semibold capitalize transition cursor-pointer"
-                  style={{
-                    background: role === r ? '#F04424' : 'transparent',
-                    color: role === r ? '#FFFFFF' : '#777777',
-                    boxShadow: role === r ? '0 2px 8px rgba(240,68,36,0.25)' : 'none',
-                  }}
-                >
-                  {r}
-                </button>
-              ))}
-            </div>
-
-            <div>
-              <label className="ent-label">Portal Admission ID / Roll No</label>
-              <input
-                type="text"
-                required
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                placeholder="e.g. VVS-2026-981"
-                className="ent-input"
-              />
-            </div>
-
-            <div>
-              <label className="ent-label">Password</label>
-              <input
-                type="password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                className="ent-input"
-              />
-            </div>
-
-            <button
-              type="submit"
-              className="btn-primary w-full justify-center py-3.5 text-sm uppercase tracking-wider"
-            >
-              Sign In To Portal <LogIn size={16} />
-            </button>
-
-            <div className="text-center">
-              <span
-                className="text-[11px] cursor-pointer"
-                style={{ color: '#777777' }}
-              >
-                Forgot your password or Portal ID?
-              </span>
-            </div>
-          </form>
         )}
+
+        <form onSubmit={handleLogin} className="space-y-4">
+          {/* Role Switcher */}
+          <div
+            className="flex p-1 rounded-xl gap-1"
+            style={{ background: '#FBF8F6', border: '1px solid #ECECEC' }}
+          >
+            {(['student', 'parent', 'teacher'] as const).map((r) => (
+              <button
+                type="button"
+                key={r}
+                onClick={() => autofillDemo(r)}
+                className="flex-1 py-2 rounded-lg text-xs font-semibold capitalize transition cursor-pointer"
+                style={{
+                  background: role === r ? '#F04424' : 'transparent',
+                  color: role === r ? '#FFFFFF' : '#777777',
+                  boxShadow: role === r ? '0 2px 8px rgba(240,68,36,0.25)' : 'none',
+                }}
+              >
+                {r}
+              </button>
+            ))}
+          </div>
+
+          <div>
+            <label className="ent-label flex justify-between">
+              <span>Portal Admission ID / Roll No</span>
+              <span className="text-[10px] text-red-500 font-normal">Required</span>
+            </label>
+            <input
+              type="text"
+              required
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="e.g. VVS-2026-981"
+              className="ent-input font-mono text-sm"
+            />
+          </div>
+
+          <div>
+            <label className="ent-label">Password</label>
+            <input
+              type="password"
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••"
+              className="ent-input font-mono text-sm"
+            />
+          </div>
+
+          {/* Quick Demo Autofill Banner */}
+          <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs space-y-1">
+            <div className="flex items-center gap-1 font-bold">
+              <Sparkles size={13} className="text-amber-600" /> Demo Credentials Pre-filled:
+            </div>
+            <p className="text-[11px] text-amber-800">
+              User ID: <code className="font-bold bg-amber-100 px-1 rounded">{username}</code> | Pass:{' '}
+              <code className="font-bold bg-amber-100 px-1 rounded">password123</code>
+            </p>
+          </div>
+
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="btn-primary w-full justify-center py-3.5 text-sm uppercase tracking-wider font-bold shadow-lg"
+          >
+            {isLoading ? 'Authenticating ERP...' : 'Sign In To ERP Dashboard'} <LogIn size={16} />
+          </button>
+        </form>
       </div>
     </div>
   );

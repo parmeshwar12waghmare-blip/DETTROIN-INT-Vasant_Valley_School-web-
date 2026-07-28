@@ -9,6 +9,8 @@
 //   - Online image: 'https://your-cdn.com/stem-lab.jpg'
 //   - Local image:  '/images/stem-lab.jpg'  (place file in frontend/public/images/)
 
+import { localImages, schoolImages } from '../assets/images';
+
 export const campusContent = {
   // ── Section header text ───────────────────────────────────────────────────
   sectionBadge: 'World-Class Infrastructure',
@@ -21,32 +23,23 @@ export const campusContent = {
       id: '1',
       name: 'Advanced STEM & AI Lab',
       category: 'labs',
-      // FACILITY IMAGE #1 — STEM & AI Lab card thumbnail
-      // WHERE: Campus section grid, card 1 (STEM & Labs category)
-      // USED IN: CampusSection.tsx → <img src={fac.img} />
-      img: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=600&q=80',
+      img: localImages.demo || schoolImages.stemLab,
       description:
         'High-speed computing rigs, 3D printers, IoT hardware kits, and robotics assembly stations.',
     },
     {
       id: '2',
-      name: 'Olympic Semi-Covered Pool',
+      name: 'Olympic Semi-Covered Pool & Aquatic Center',
       category: 'sports',
-      // FACILITY IMAGE #2 — Swimming Pool card thumbnail
-      // WHERE: Campus section grid, card 2 (Sports Complex category)
-      // USED IN: CampusSection.tsx → <img src={fac.img} />
-      img: 'https://images.unsplash.com/photo-1576610616656-d3aa5d1f4534?auto=format&fit=crop&w=600&q=80',
+      img: localImages.building || schoolImages.swimmingPool,
       description:
         'Temperature-controlled 25m swimming pool with certified lifeguard supervisors and training tracks.',
     },
     {
       id: '3',
-      name: 'Central Digital Library',
+      name: 'Central Digital Library & Knowledge Hub',
       category: 'labs',
-      // FACILITY IMAGE #3 — Library card thumbnail
-      // WHERE: Campus section grid, card 3 (STEM & Labs category)
-      // USED IN: CampusSection.tsx → <img src={fac.img} />
-      img: 'https://images.unsplash.com/photo-1521587760476-6c12a4b040da?auto=format&fit=crop&w=600&q=80',
+      img: localImages.infraBanner || schoolImages.library,
       description:
         'Over 30,000 volumes, international academic journals, e-readers, and quiet study pods.',
     },
@@ -54,34 +47,25 @@ export const campusContent = {
       id: '4',
       name: 'Grand Performing Arts Amphitheatre',
       category: 'arts',
-      // FACILITY IMAGE #4 — Amphitheatre / Theatre card thumbnail
-      // WHERE: Campus section grid, card 4 (Arts & Culture category)
-      // USED IN: CampusSection.tsx → <img src={fac.img} />
-      img: 'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?auto=format&fit=crop&w=600&q=80',
+      img: localImages.valley || schoolImages.amphitheatre,
       description:
         'Acoustically designed 800-seater theatre hosting drama productions, musical concert nights, and debates.',
     },
     {
       id: '5',
-      name: 'Vasant Sports Arena & Courts',
+      name: 'Vasant Sports Arena & Athletic Ground',
       category: 'sports',
-      // FACILITY IMAGE #5 — Sports Courts / Arena card thumbnail
-      // WHERE: Campus section grid, card 5 (Sports Complex category)
-      // USED IN: CampusSection.tsx → <img src={fac.img} />
-      img: 'https://images.unsplash.com/photo-1546519638-68e109498ffc?auto=format&fit=crop&w=600&q=80',
+      img: localImages.ground || schoolImages.sportsArena,
       description:
         'Synthetic basketball courts, lawn tennis arena, and FIFA-grade football turf ground.',
     },
     {
       id: '6',
-      name: 'Fine Arts Studio & Pottery Hub',
+      name: 'Vasant Main Campus Heritage Pavilion',
       category: 'arts',
-      // FACILITY IMAGE #6 — Fine Arts Studio card thumbnail
-      // WHERE: Campus section grid, card 6 (Arts & Culture category)
-      // USED IN: CampusSection.tsx → <img src={fac.img} />
-      img: 'https://images.unsplash.com/photo-1513364776144-60967b0f800f?auto=format&fit=crop&w=600&q=80',
+      img: localImages.campusMain || schoolImages.artsStudio,
       description:
-        'Dedicated spaces for oil painting, clay molding, sculpture, printmaking, and graphic design.',
+        'Iconic architecture surrounded by botanical gardens, solar pavilions, and creative design studios.',
     },
   ],
 

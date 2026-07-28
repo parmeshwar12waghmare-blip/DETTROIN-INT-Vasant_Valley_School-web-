@@ -20,12 +20,14 @@ const TOP_BAR = {
 // Each item's `id` must match the `id=""` attribute on the corresponding
 // section element in App.tsx so smooth-scroll anchoring works correctly.
 const navItems = [
-  { id: 'home',       label: 'Home' },
-  { id: 'academics',  label: 'Academics' },
-  { id: 'admissions', label: 'Admissions' },
-  { id: 'campus',     label: 'Campus Life' },
-  { id: 'news',       label: 'News & Events' },
-  { id: 'contact',    label: 'Contact Us' },
+  { id: 'home',         label: 'Home' },
+  { id: 'about',        label: 'About Us' },
+  { id: 'academics',    label: 'Academics' },
+  { id: 'achievements', label: 'Achievements' },
+  { id: 'admissions',   label: 'Admissions' },
+  { id: 'campus',       label: 'Campus Life' },
+  { id: 'news',         label: 'News & Events' },
+  { id: 'contact',      label: 'Contact Us' },
 ];
 
 // ─── HEADER PROPS ─────────────────────────────────────────────────────────────
@@ -33,9 +35,10 @@ interface NavbarProps {
   /** Smooth-scrolls the window to the section whose id matches the given string */
   scrollToSection: (id: string) => void;
   onOpenPortal: () => void;
+  onOpen360Tour?: () => void;
 }
 
-export const Header: React.FC<NavbarProps> = ({ scrollToSection, onOpenPortal }) => {
+export const Header: React.FC<NavbarProps> = ({ scrollToSection, onOpenPortal, onOpen360Tour }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // ─── ACTIVE SECTION TRACKER ──────────────────────────────────────────────
@@ -100,10 +103,9 @@ export const Header: React.FC<NavbarProps> = ({ scrollToSection, onOpenPortal })
             </span>
             <button
               onClick={onOpenPortal}
-              className="flex items-center gap-1 font-semibold cursor-pointer transition"
-              style={{ color: '#F04424' }}
+              className="flex items-center gap-1 font-bold cursor-pointer transition text-red-500 hover:text-red-400"
             >
-              {TOP_BAR.portalLabel} <ChevronRight size={12} />
+              ERP Login <ChevronRight size={12} />
             </button>
           </div>
         </div>
@@ -143,7 +145,7 @@ export const Header: React.FC<NavbarProps> = ({ scrollToSection, onOpenPortal })
                   <button
                     key={item.id}
                     onClick={() => handleNavClick(item.id)}
-                    className="px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 cursor-pointer"
+                    className="px-3.5 py-2 rounded-xl text-sm font-medium transition-all duration-200 cursor-pointer"
                     style={{
                       background: isActive ? 'rgba(240,68,36,0.08)' : 'transparent',
                       color: isActive ? '#F04424' : '#555555',
@@ -154,9 +156,26 @@ export const Header: React.FC<NavbarProps> = ({ scrollToSection, onOpenPortal })
                   </button>
                 );
               })}
+
+              {onOpen360Tour && (
+                <button
+                  onClick={onOpen360Tour}
+                  className="px-3.5 py-2 rounded-xl text-sm font-bold text-amber-600 bg-amber-500/10 border border-amber-500/30 hover:bg-amber-500/20 transition cursor-pointer flex items-center gap-1.5"
+                >
+                  360° Tour
+                </button>
+              )}
+
+              <button
+                onClick={onOpenPortal}
+                className="ml-2 px-4 py-2.5 rounded-xl text-sm font-bold bg-slate-900 hover:bg-slate-800 text-white transition cursor-pointer shadow-sm"
+              >
+                ERP Login
+              </button>
+
               <button
                 onClick={() => handleNavClick('admissions')}
-                className="ml-4 btn-primary text-sm"
+                className="ml-2 btn-primary text-sm"
               >
                 Apply 2026–27
               </button>

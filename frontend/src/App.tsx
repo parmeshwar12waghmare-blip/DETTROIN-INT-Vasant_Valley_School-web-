@@ -3,16 +3,19 @@ import { Header } from './components/common/Header';
 import { Footer } from './components/common/Footer';
 import { PortalModal } from './components/common/PortalModal';
 import { HeroSection } from './components/home/HeroSection';
+import { AboutSection } from './components/about/AboutSection';
 import { HighlightsSection } from './components/home/HighlightsSection';
 import { AcademicsSection } from './components/academics/AcademicsSection';
+import { AchievementsSection } from './components/achievements/AchievementsSection';
 import { AdmissionsSection } from './components/admissions/AdmissionsSection';
 import { CampusSection } from './components/campus/CampusSection';
 import { NewsSection } from './components/news/NewsSection';
 import { ContactSection } from './components/contact/ContactSection';
+import { ERPDashboard } from './components/erp/ERPDashboard';
+import { VirtualTour360 } from './components/campus/VirtualTour360';
+import type { ERPUser } from './types';
 
 // ─── SCROLL HELPER ────────────────────────────────────────────────────────────
-// Smoothly scrolls the page to a section by its HTML id attribute.
-// Used by Header nav links and Hero CTA buttons.
 const scrollToSection = (id: string) => {
   const el = document.getElementById(id);
   if (el) {
@@ -22,47 +25,67 @@ const scrollToSection = (id: string) => {
 
 export const App: React.FC = () => {
   const [isPortalOpen, setIsPortalOpen] = useState<boolean>(false);
+  const [is360TourOpen, setIs360TourOpen] = useState<boolean>(false);
+  const [erpUser, setErpUser] = useState<ERPUser | null>(null);
+
+  // If user is currently logged into ERP, display the full ERP Dashboard
+  if (erpUser) {
+    return (
+      <ERPDashboard
+        user={erpUser}
+        onLogout={() => setErpUser(null)}
+      />
+    );
+  }
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50 text-slate-900 selection:bg-emerald-500 selection:text-white">
-
-      {/* ─── Sticky Navigation Header ──────────────────────────────────────────
-          Passes scrollToSection so nav links use smooth anchor scrolling
-          instead of tab-switching. */}
+    <div className="min-h-screen flex flex-col bg-slate-950 text-slate-100 selection:bg-red-500 selection:text-white">
+      {/* ─── Sticky Navigation Header ────────────────────────────────────────── */}
       <Header
         scrollToSection={scrollToSection}
         onOpenPortal={() => setIsPortalOpen(true)}
+        onOpen360Tour={() => setIs360TourOpen(true)}
       />
 
-      {/* ─── Main Content — All sections are rendered together ──────────────────
-          Each section has a unique id="" so the Header nav can scroll to it.
-          No lazy loading / tab switching — everything is on one long page. */}
+      {/* ─── Main Content — All sections rendered together ────────────────── */}
       <main className="flex-grow">
-
-        {/* id="home" — Hero banner at the very top */}
+        {/* id="home" — Full Viewport Auto-fit Glassmorphism Hero Section */}
         <HeroSection
           onApplyClick={() => scrollToSection('admissions')}
           onExploreClick={() => scrollToSection('campus')}
+          onOpen360Tour={() => setIs360TourOpen(true)}
         />
 
-        {/* id="highlights" — Why families choose Vasant Valley pillars */}
+        {/* 360° Virtual Tour Section Banner (When Opened) */}
+        {is360TourOpen && (
+          <div id="3d-view-tour" className="bg-slate-950 border-y border-slate-800">
+            <VirtualTour360 onClose={() => setIs360TourOpen(false)} />
+          </div>
+        )}
+
+        {/* id="about" — About Us & Leadership Team Section */}
+        <AboutSection onExplore360={() => setIs360TourOpen(true)} />
+
+        {/* id="highlights" — Why families choose Vasant Valley */}
         <HighlightsSection />
 
-        {/* id="academics" — Primary / Middle / Senior stage tabs */}
+        {/* id="academics" — Stage tabs */}
         <AcademicsSection />
 
-        {/* id="admissions" — Online application form & eligibility info */}
+        {/* id="achievements" — Student & School Accolades */}
+        <AchievementsSection />
+
+        {/* id="admissions" — Online application form */}
         <AdmissionsSection />
 
-        {/* id="campus" — Facility gallery with category filter */}
-        <CampusSection />
+        {/* id="campus" — Facility gallery */}
+        <CampusSection onOpen360Tour={() => setIs360TourOpen(true)} />
 
-        {/* id="news" — Upcoming events & circular notice board */}
+        {/* id="news" — Upcoming events & notices */}
         <NewsSection />
 
-        {/* id="contact" — Contact form & address details */}
+        {/* id="contact" — Contact form & address */}
         <ContactSection />
-
       </main>
 
       {/* ─── Footer ──────────────────────────────────────────────────────────── */}
@@ -72,6 +95,10 @@ export const App: React.FC = () => {
       <PortalModal
         isOpen={isPortalOpen}
         onClose={() => setIsPortalOpen(false)}
+        onSuccessLogin={(user) => {
+          setErpUser(user);
+          setIsPortalOpen(false);
+        }}
       />
     </div>
   );
