@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { submitAdmissionForm } from '../../services/api';
 import type { AdmissionApplication } from '../../types';
 import { Send, CheckCircle, FileText, DollarSign, HelpCircle, UserCheck } from 'lucide-react';
-import { admissionsContent } from '../../content/admissionsContent';
+import { admissionsContent } from '../../content/admissionsContent.tsx';
 
 const stepIcons = [
   <FileText style={{ color: '#F04424' }} size={20} />,

@@ -108,7 +108,6 @@ app.delete('/api/contact/:id', async (req, res) => {
 
 // Always start the server (Render and other hosts need the process to bind to PORT)
 app.listen(PORT, () => {
-  console.log(`Vasant Valley School Backend running on http://localhost:${PORT}`);
+  console.log(`Server running on port ${PORT}`);
 });
-
 module.exports = app;
