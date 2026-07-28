@@ -106,6 +106,7 @@ app.delete('/api/contact/:id', async (req, res) => {
   }
 });
 
+ HEAD
 
 //test 
 
@@ -117,4 +118,20 @@ console.log("PORT:", process.env.PORT);
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
+
+//connection 
+connectToDatabase()
+  .then(() => {
+    console.log("✅ MongoDB Connected");
+
+    app.listen(PORT, () => {
+      console.log(`Server running on port ${PORT}`);
+    });
+  })
+  .catch((err) => {
+    console.error("❌ MongoDB Connection Error:", err);
+  });
+
+
+
 module.exports = app;

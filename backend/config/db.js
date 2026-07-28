@@ -18,17 +18,22 @@ async function connectToDatabase() {
       bufferCommands: false,
     };
 
-    cached.promise = mongoose.connect(MONGODB_URI, opts).then((mongooseInstance) => {
-      return mongooseInstance;
-    });
+   cached.promise = mongoose.connect(MONGODB_URI, opts).then((mongooseInstance) => {
+  console.log("✅ MongoDB Atlas Connected");
+  return mongooseInstance;
+});
+
+
   }
 
   try {
     cached.conn = await cached.promise;
   } catch (e) {
-    cached.promise = null;
-    throw e;
-  }
+  console.error("❌ MongoDB Connection Error:", e);
+  cached.promise = null;
+  throw e;
+}
+  
 
   return cached.conn;
 }
