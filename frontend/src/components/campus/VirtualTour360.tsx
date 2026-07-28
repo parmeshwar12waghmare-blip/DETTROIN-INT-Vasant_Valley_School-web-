@@ -8,14 +8,11 @@ import {
   Info,
   Layers,
   MapPin,
-  ChevronRight,
-  CheckCircle,
   X,
-  Sparkles,
-  ArrowRight,
   Eye
 } from 'lucide-react';
-import { VIEW_3D_PATHS, ViewPage360, Hotspot3D } from '../../assets/3d_view/paths';
+import { VIEW_3D_PATHS } from '../../assets/3d_view/paths';
+import type { ViewPage360, Hotspot3D } from '../../assets/3d_view/paths';
 
 interface VirtualTour360Props {
   isOpen?: boolean;

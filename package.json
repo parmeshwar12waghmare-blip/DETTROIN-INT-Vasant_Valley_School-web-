@@ -1,0 +1,16 @@
+{
+  "name": "vasant-valley-school",
+  "version": "1.0.0",
+  "description": "Vasant Valley School Website - Full Stack",
+  "private": true,
+  "scripts": {
+    "build": "cd frontend && npm install && npm run build",
+    "start": "cd backend && node server.js",
+    "dev:frontend": "cd frontend && npm run dev",
+    "dev:backend": "cd backend && node server.js",
+    "install:all": "cd frontend && npm install && cd ../backend && npm install"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

@@ -3,18 +3,12 @@ import {
   Trophy,
   Award,
   GraduationCap,
-  Sparkles,
   Search,
-  Star,
-  CheckCircle,
-  ArrowUpRight,
   Medal,
-  ChevronRight,
   ShieldCheck,
-  Building2,
-  Users
 } from 'lucide-react';
-import { achievementsContent, StudentAchievement, SchoolAchievement, UniversityAcceptance } from '../../content/achievementsContent';
+import { achievementsContent } from '../../content/achievementsContent';
+import type { StudentAchievement, SchoolAchievement, UniversityAcceptance } from '../../content/achievementsContent';
 
 export const AchievementsSection: React.FC = () => {
   const c = achievementsContent;

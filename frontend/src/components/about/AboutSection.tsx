@@ -2,28 +2,22 @@ import React, { useState } from 'react';
 import {
   Sparkles,
   Award,
-  ArrowRight,
   ShieldCheck,
-  BookOpen,
-  Cpu,
-  Globe,
   Mail,
   X,
-  UserCheck,
   ChevronRight,
   Quote,
-  Clock,
-  GraduationCap,
   Users
 } from 'lucide-react';
-import { aboutContent, TeamMember } from '../../content/aboutContent';
+import { aboutContent } from '../../content/aboutContent';
+import type { TeamMember } from '../../content/aboutContent';
 
 interface AboutSectionProps {
   onApplyClick?: () => void;
   onExplore360?: () => void;
 }
 
-export const AboutSection: React.FC<AboutSectionProps> = ({ onApplyClick, onExplore360 }) => {
+export const AboutSection: React.FC<AboutSectionProps> = ({ onExplore360 }) => {
   const c = aboutContent;
   const [selectedMember, setSelectedMember] = useState<TeamMember | null>(null);
 

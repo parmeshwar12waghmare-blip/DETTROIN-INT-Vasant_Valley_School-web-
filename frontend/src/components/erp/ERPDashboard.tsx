@@ -17,10 +17,12 @@ import {
   FileText,
   ChevronRight,
   Sparkles,
-  Download
+  Download,
+  Users
 } from 'lucide-react';
 import type { ERPUser, ERPQueryResult } from '../../types';
 import { queryERPDatabase, syncERPDatabase } from '../../services/api';
+import { AdminUserPanel } from './AdminUserPanel';
 
 interface ERPDashboardProps {
   user: ERPUser;
@@ -28,7 +30,7 @@ interface ERPDashboardProps {
 }
 
 export const ERPDashboard: React.FC<ERPDashboardProps> = ({ user, onLogout }) => {
-  const [activeTab, setActiveTab] = useState<'overview' | 'queries' | 'academics' | 'fees' | 'timetable'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'queries' | 'academics' | 'fees' | 'timetable' | 'admin'>('overview');
   const [activeRole, setActiveRole] = useState<'student' | 'parent' | 'teacher' | 'admin'>(user.role || 'student');
   
   // Database Query State
@@ -126,11 +128,12 @@ export const ERPDashboard: React.FC<ERPDashboardProps> = ({ user, onLogout }) =>
           </div>
 
           {[
-            { id: 'overview', label: 'Dashboard Overview', icon: User },
-            { id: 'queries', label: 'Database & Queries', icon: Database },
-            { id: 'academics', label: 'Academic Grades', icon: Award },
-            { id: 'fees', label: 'Fee Payments & Sync', icon: CreditCard },
-            { id: 'timetable', label: 'Class Timetable', icon: Calendar },
+            { id: 'overview',  label: 'Dashboard Overview',       icon: User },
+            { id: 'queries',   label: 'Database & Queries',        icon: Database },
+            { id: 'academics', label: 'Academic Grades',           icon: Award },
+            { id: 'fees',      label: 'Fee Payments & Sync',       icon: CreditCard },
+            { id: 'timetable', label: 'Class Timetable',           icon: Calendar },
+            ...(user.role === 'admin' ? [{ id: 'admin', label: 'User Management', icon: Users }] : []),
           ].map((item) => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
@@ -497,6 +500,13 @@ export const ERPDashboard: React.FC<ERPDashboardProps> = ({ user, onLogout }) =>
                   </div>
                 ))}
               </div>
+            </div>
+          )}
+
+          {/* ── TAB 6: ADMIN USER MANAGEMENT (admin only) ─────────────────── */}
+          {activeTab === 'admin' && user.role === 'admin' && (
+            <div className="space-y-6">
+              <AdminUserPanel />
             </div>
           )}
         </main>
