@@ -38,3 +38,60 @@ export interface ContactInquiry {
   subject: string;
   message: string;
 }
+
+export interface ERPUserGrade {
+  subject: string;
+  score: number;
+  grade: string;
+  teacher: string;
+}
+
+export interface ERPUserSchedule {
+  day: string;
+  period: string;
+  subject: string;
+  room: string;
+  teacher: string;
+}
+
+export interface ERPUserNotice {
+  id: string;
+  title: string;
+  date: string;
+  category: string;
+  content: string;
+}
+
+export interface ERPUser {
+  portalId: string;
+  name: string;
+  email: string;
+  role: 'student' | 'parent' | 'teacher' | 'admin';
+  grade: string;
+  rollNo: string;
+  parentName: string;
+  attendanceRate: number;
+  feeStatus: string;
+  dueAmount: number;
+  grades: ERPUserGrade[];
+  schedule: ERPUserSchedule[];
+  notices: ERPUserNotice[];
+}
+
+export interface ERPDashboardData {
+  user: ERPUser;
+  stats: {
+    totalStudents: number;
+    averageAttendance: string;
+    activeCourses: number;
+    feeSyncStatus: string;
+  };
+}
+
+export interface ERPQueryResult {
+  success: boolean;
+  queryType: string;
+  queryExecuted: string;
+  executionTimeMs: number;
+  data: any[];
+}
