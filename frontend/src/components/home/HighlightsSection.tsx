@@ -1,6 +1,6 @@
 import React from 'react';
 import { BookOpen, Cpu, Trophy, HeartHandshake } from 'lucide-react';
-import { highlightsContent } from '../../content/highlightsContent';
+import { highlightsContent } from '../../content/highlightsContent.ts';
 
 const pillarIcons = [
   <BookOpen style={{ color: '#F04424' }} size={30} />,
