@@ -187,8 +187,10 @@ key={item.id}
 onClick={()=>handleNavClick(item.id)}
 className={`
 px-3.5 py-2 rounded-xl text-sm font-medium transition
+border border-white/20
+hover:border-red-400
 ${activeSection===item.id
-?"bg-red-600/30 text-red-400 font-bold"
+?"bg-red-600/30 text-red-400 font-bold border-red-500"
 :"text-white hover:bg-white/10"
 }
 `}
