@@ -109,17 +109,11 @@ app.delete('/api/contact/:id', async (req, res) => {
  HEAD
 
 //test 
-
+// Test environment variables
 console.log("MONGODB_URI:", process.env.MONGODB_URI ? "Found" : "Missing");
 console.log("PORT:", process.env.PORT);
 
-
-// Always start the server (Render and other hosts need the process to bind to PORT)
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
-
-//connection 
+// Connect to MongoDB and then start the server
 connectToDatabase()
   .then(() => {
     console.log("✅ MongoDB Connected");
@@ -131,7 +125,5 @@ connectToDatabase()
   .catch((err) => {
     console.error("❌ MongoDB Connection Error:", err);
   });
-
-
 
 module.exports = app;
