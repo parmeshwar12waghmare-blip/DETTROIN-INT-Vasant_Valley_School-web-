@@ -1,25 +1,14 @@
 // ─── ADMIN USER MANAGEMENT PANEL ──────────────────────────────────────────────
-// Full Firebase-backed user management: list, create, suspend, activate,
-// send password reset, and Firestore database seeding.
-// Only visible to admin role users.
+// Database-backed user management: list, create, filter, and manage accounts.
+// Only accessible to authorized admin role users.
 
 import React, { useState, useEffect, useCallback } from 'react';
 import {
-  Users, UserPlus, ShieldCheck, Mail, RefreshCw,
-  Database, CheckCircle, AlertTriangle, Search,
-  Lock, Unlock
+  Users, UserPlus, ShieldCheck, RefreshCw,
+  CheckCircle, AlertTriangle, Search
 } from 'lucide-react';
-import {
-  getAllUsers,
-  getUsersByRole,
-  suspendUser,
-  activateUser,
-} from '../../firebase/firestoreService';
-import { createERPUser, resetPassword } from '../../firebase/authService';
-import { seedDemoData } from '../../firebase/seedDatabase';
-import type { FirebaseUserProfile } from '../../types';
+import { fetchERPUsers, createERPUserDB } from '../../services/api';
 
-// ─── Sub-components ───────────────────────────────────────────────────────────
 const RoleBadge: React.FC<{ role: string }> = ({ role }) => {
   const colors: Record<string, string> = {
     admin:   'bg-red-500/20 text-red-300 border-red-500/40',
@@ -34,19 +23,12 @@ const RoleBadge: React.FC<{ role: string }> = ({ role }) => {
   );
 };
 
-const StatusDot: React.FC<{ active: boolean }> = ({ active }) => (
-  <span className={`inline-flex items-center gap-1 text-xs font-medium ${active ? 'text-emerald-400' : 'text-slate-500'}`}>
-    <span className={`w-2 h-2 rounded-full ${active ? 'bg-emerald-400 animate-pulse' : 'bg-slate-600'}`} />
-    {active ? 'Active' : 'Suspended'}
-  </span>
-);
-
 // ─── CREATE USER FORM ─────────────────────────────────────────────────────────
 const CreateUserForm: React.FC<{ onCreated: (msg: string) => void }> = ({ onCreated }) => {
   const [form, setForm] = useState({
     name: '', email: '', password: '', portalId: '',
     role: 'student' as 'student' | 'parent' | 'teacher' | 'admin',
-    grade: '', phone: '',
+    grade: '', parentName: '',
   });
   const [loading, setLoading] = useState(false);
   const [error,   setError]   = useState('');
@@ -63,14 +45,15 @@ const CreateUserForm: React.FC<{ onCreated: (msg: string) => void }> = ({ onCrea
     setLoading(true);
     setError('');
     try {
-      await createERPUser(form.email, form.password, {
-        name: form.name, role: form.role,
-        portalId: form.portalId, grade: form.grade, phone: form.phone,
-      });
-      onCreated(`✅ User "${form.name}" created successfully as ${form.role}.`);
-      setForm({ name: '', email: '', password: '', portalId: '', role: 'student', grade: '', phone: '' });
+      const res = await createERPUserDB(form);
+      if (res?.success) {
+        onCreated(`✅ Account created for "${form.name}" (${form.role}).`);
+        setForm({ name: '', email: '', password: '', portalId: '', role: 'student', grade: '', parentName: '' });
+      } else {
+        setError(res?.message || 'Failed to create user.');
+      }
     } catch (err: any) {
-      setError(err.message || 'Failed to create user.');
+      setError(err.message || 'Failed to connect to database.');
     } finally {
       setLoading(false);
     }
@@ -94,7 +77,7 @@ const CreateUserForm: React.FC<{ onCreated: (msg: string) => void }> = ({ onCrea
           <input type="email" className={inputCls} placeholder="user@vasantvalley.edu.in" value={form.email} onChange={handleChange('email')} />
         </div>
         <div>
-          <label className="block text-xs text-slate-400 mb-1">Temporary Password *</label>
+          <label className="block text-xs text-slate-400 mb-1">Password *</label>
           <input type="password" className={inputCls} placeholder="Min. 6 characters" value={form.password} onChange={handleChange('password')} />
         </div>
         <div>
@@ -112,10 +95,6 @@ const CreateUserForm: React.FC<{ onCreated: (msg: string) => void }> = ({ onCrea
             <input className={inputCls} placeholder="e.g. Class X-A" value={form.grade} onChange={handleChange('grade')} />
           </div>
         )}
-        <div>
-          <label className="block text-xs text-slate-400 mb-1">Phone Number</label>
-          <input className={inputCls} placeholder="+91 XXXXX XXXXX" value={form.phone} onChange={handleChange('phone')} />
-        </div>
       </div>
 
       {error && (
@@ -127,10 +106,10 @@ const CreateUserForm: React.FC<{ onCreated: (msg: string) => void }> = ({ onCrea
       <button
         type="submit"
         disabled={loading}
-        className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-red-600 to-red-700 rounded-xl text-sm font-semibold text-white hover:from-red-500 hover:to-red-600 transition-all disabled:opacity-50"
+        className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-red-600 to-red-700 rounded-xl text-sm font-semibold text-white hover:from-red-500 hover:to-red-600 transition-all disabled:opacity-50 cursor-pointer"
       >
         {loading ? <RefreshCw size={14} className="animate-spin" /> : <UserPlus size={14} />}
-        {loading ? 'Creating User...' : 'Create ERP User'}
+        {loading ? 'Saving to DB...' : 'Create ERP User Account'}
       </button>
     </form>
   );
@@ -138,15 +117,13 @@ const CreateUserForm: React.FC<{ onCreated: (msg: string) => void }> = ({ onCrea
 
 // ─── MAIN ADMIN USER PANEL ────────────────────────────────────────────────────
 export const AdminUserPanel: React.FC = () => {
-  const [users,     setUsers]     = useState<FirebaseUserProfile[]>([]);
-  const [filtered,  setFiltered]  = useState<FirebaseUserProfile[]>([]);
+  const [users,     setUsers]     = useState<any[]>([]);
+  const [filtered,  setFiltered]  = useState<any[]>([]);
   const [loading,   setLoading]   = useState(true);
-  const [tab,       setTab]       = useState<'list' | 'create' | 'seed'>('list');
+  const [tab,       setTab]       = useState<'list' | 'create'>('list');
   const [search,    setSearch]    = useState('');
   const [roleFilter,setRoleFilter]= useState('all');
   const [toast,     setToast]     = useState('');
-  const [seedLog,   setSeedLog]   = useState<string[]>([]);
-  const [seeding,   setSeeding]   = useState(false);
 
   const showToast = (msg: string) => {
     setToast(msg);
@@ -156,16 +133,14 @@ export const AdminUserPanel: React.FC = () => {
   const loadUsers = useCallback(async () => {
     setLoading(true);
     try {
-      const data = roleFilter === 'all'
-        ? await getAllUsers()
-        : await getUsersByRole(roleFilter);
-      setUsers(data as FirebaseUserProfile[]);
+      const data = await fetchERPUsers();
+      setUsers(data.users || []);
     } catch {
       setUsers([]);
     } finally {
       setLoading(false);
     }
-  }, [roleFilter]);
+  }, []);
 
   useEffect(() => { loadUsers(); }, [loadUsers]);
 
@@ -173,43 +148,17 @@ export const AdminUserPanel: React.FC = () => {
     const q = search.toLowerCase();
     setFiltered(
       users.filter(u =>
-        u.name?.toLowerCase().includes(q) ||
-        u.email?.toLowerCase().includes(q) ||
-        u.portalId?.toLowerCase().includes(q)
+        (roleFilter === 'all' || u.role === roleFilter) &&
+        (u.name?.toLowerCase().includes(q) ||
+         u.email?.toLowerCase().includes(q) ||
+         u.portalId?.toLowerCase().includes(q))
       )
     );
-  }, [users, search]);
-
-  const handleSuspend = async (uid: string, name: string) => {
-    await suspendUser(uid);
-    showToast(`🔒 ${name} suspended.`);
-    loadUsers();
-  };
-
-  const handleActivate = async (uid: string, name: string) => {
-    await activateUser(uid);
-    showToast(`✅ ${name} re-activated.`);
-    loadUsers();
-  };
-
-  const handleResetPassword = async (email: string) => {
-    await resetPassword(email);
-    showToast(`📧 Password reset email sent to ${email}`);
-  };
-
-  const handleSeed = async () => {
-    setSeeding(true);
-    setSeedLog([]);
-    await seedDemoData(msg => setSeedLog(prev => [...prev, msg]));
-    setSeeding(false);
-    showToast('🌱 Firestore seeded with demo data!');
-    loadUsers();
-  };
+  }, [users, search, roleFilter]);
 
   const tabs = [
-    { id: 'list',   label: 'All Users',    icon: <Users size={14} /> },
-    { id: 'create', label: 'Create User',  icon: <UserPlus size={14} /> },
-    { id: 'seed',   label: 'Seed Database',icon: <Database size={14} /> },
+    { id: 'list',   label: 'All Database Users', icon: <Users size={14} /> },
+    { id: 'create', label: 'Create New Account', icon: <UserPlus size={14} /> },
   ] as const;
 
   return (
@@ -225,12 +174,12 @@ export const AdminUserPanel: React.FC = () => {
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-lg font-bold text-white flex items-center gap-2">
-            <ShieldCheck size={20} className="text-red-400" /> User Management
+            <ShieldCheck size={20} className="text-red-400" /> System User Management (Database)
           </h3>
-          <p className="text-sm text-slate-400 mt-0.5">Manage ERP users via Firebase Authentication & Firestore</p>
+          <p className="text-sm text-slate-400 mt-0.5">Manage student, teacher, parent, and admin accounts in MongoDB</p>
         </div>
-        <button onClick={loadUsers} className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-white bg-slate-800 border border-slate-700 px-3 py-1.5 rounded-lg transition-colors">
-          <RefreshCw size={12} /> Refresh
+        <button onClick={loadUsers} className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-white bg-slate-800 border border-slate-700 px-3 py-1.5 rounded-lg transition-colors cursor-pointer">
+          <RefreshCw size={12} /> Refresh DB
         </button>
       </div>
 
@@ -240,7 +189,7 @@ export const AdminUserPanel: React.FC = () => {
           <button
             key={t.id}
             onClick={() => setTab(t.id)}
-            className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+            className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer ${
               tab === t.id
                 ? 'bg-red-600 text-white shadow-lg'
                 : 'bg-slate-800 text-slate-400 hover:text-white border border-slate-700'
@@ -291,61 +240,33 @@ export const AdminUserPanel: React.FC = () => {
           {/* User Table */}
           {loading ? (
             <div className="flex justify-center py-12 text-slate-400">
-              <RefreshCw size={20} className="animate-spin mr-2" /> Loading users from Firestore...
+              <RefreshCw size={20} className="animate-spin mr-2" /> Querying users from database...
             </div>
           ) : filtered.length === 0 ? (
             <div className="text-center py-12 text-slate-500">
               <Users size={32} className="mx-auto mb-3 opacity-30" />
-              <p>No users found. Seed the database or create new users.</p>
+              <p>No user records found matching your filter criteria.</p>
             </div>
           ) : (
             <div className="overflow-x-auto rounded-xl border border-slate-700">
               <table className="w-full text-sm">
                 <thead className="bg-slate-800/80">
                   <tr>
-                    {['Name / Portal ID','Role','Status','Email','Actions'].map(h => (
+                    {['Name / Portal ID','Role','Grade / Roll','Email'].map(h => (
                       <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">{h}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-800">
                   {filtered.map((u, i) => (
-                    <tr key={u.id || i} className="hover:bg-slate-800/40 transition-colors">
+                    <tr key={u.portalId || i} className="hover:bg-slate-800/40 transition-colors">
                       <td className="px-4 py-3">
                         <div className="font-medium text-white">{u.name}</div>
                         <div className="text-xs text-slate-500 font-mono">{u.portalId}</div>
                       </td>
                       <td className="px-4 py-3"><RoleBadge role={u.role} /></td>
-                      <td className="px-4 py-3"><StatusDot active={u.isActive} /></td>
-                      <td className="px-4 py-3 text-slate-400 text-xs">{u.email}</td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => handleResetPassword(u.email)}
-                            title="Send password reset"
-                            className="p-1.5 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 transition-colors"
-                          >
-                            <Mail size={13} />
-                          </button>
-                          {u.isActive ? (
-                            <button
-                              onClick={() => handleSuspend(u.id || '', u.name)}
-                              title="Suspend user"
-                              className="p-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 transition-colors"
-                            >
-                              <Lock size={13} />
-                            </button>
-                          ) : (
-                            <button
-                              onClick={() => handleActivate(u.id || '', u.name)}
-                              title="Activate user"
-                              className="p-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 transition-colors"
-                            >
-                              <Unlock size={13} />
-                            </button>
-                          )}
-                        </div>
-                      </td>
+                      <td className="px-4 py-3 text-xs text-slate-300">{u.grade || 'N/A'} • {u.rollNo || 'N/A'}</td>
+                      <td className="px-4 py-3 text-slate-400 text-xs font-mono">{u.email}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -359,48 +280,9 @@ export const AdminUserPanel: React.FC = () => {
       {tab === 'create' && (
         <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
           <h4 className="font-semibold text-white mb-4 flex items-center gap-2">
-            <UserPlus size={16} className="text-red-400" /> Create New ERP User Account
+            <UserPlus size={16} className="text-red-400" /> Create New ERP Account
           </h4>
           <CreateUserForm onCreated={msg => { showToast(msg); setTab('list'); loadUsers(); }} />
-        </div>
-      )}
-
-      {/* ── TAB: SEED DATABASE ─────────────────────────────────── */}
-      {tab === 'seed' && (
-        <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6 space-y-4">
-          <div>
-            <h4 className="font-semibold text-white flex items-center gap-2">
-              <Database size={16} className="text-red-400" /> Seed Firestore with Demo Data
-            </h4>
-            <p className="text-sm text-slate-400 mt-1">
-              Pre-populate Firestore with 4 demo users (student, parent, teacher, admin),
-              grades, attendance records, fee history, events, and announcements.
-            </p>
-          </div>
-
-          <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl px-4 py-3 text-sm text-amber-300 flex items-start gap-2">
-            <AlertTriangle size={16} className="mt-0.5 shrink-0" />
-            Run this only once. It will add demo data to your live Firestore database.
-          </div>
-
-          <button
-            onClick={handleSeed}
-            disabled={seeding}
-            className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-emerald-700 rounded-xl text-sm font-semibold text-white hover:from-emerald-500 hover:to-emerald-600 transition-all disabled:opacity-50"
-          >
-            {seeding ? <RefreshCw size={14} className="animate-spin" /> : <Database size={14} />}
-            {seeding ? 'Seeding Firestore...' : 'Seed Demo Data to Firestore'}
-          </button>
-
-          {seedLog.length > 0 && (
-            <div className="bg-slate-900 border border-slate-700 rounded-xl p-4 font-mono text-xs space-y-1 max-h-48 overflow-y-auto">
-              {seedLog.map((line, i) => (
-                <div key={i} className={line.startsWith('✅') ? 'text-emerald-400' : line.startsWith('🎉') ? 'text-yellow-400' : 'text-slate-300'}>
-                  {line}
-                </div>
-              ))}
-            </div>
-          )}
         </div>
       )}
     </div>

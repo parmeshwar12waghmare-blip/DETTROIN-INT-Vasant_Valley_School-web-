@@ -49,6 +49,6 @@ export const highlightsContent = {
     //   - Online image: 'https://your-cdn.com/principal-photo.jpg'
     //   - Local image:  '/images/principal.jpg'  (place file in frontend/public/images/)
     photo:
-      'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=400&q=80',
+      'https://res.cloudinary.com/lskutfol/image/upload/v1785261159/principle_qkf7z2.jpg',
   },
 };

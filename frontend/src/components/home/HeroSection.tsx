@@ -1,15 +1,14 @@
 import React, { useState } from 'react';
-import { ArrowRight, Sparkles, Award, Compass, ChevronRight, ShieldCheck, Volume2, VolumeX } from 'lucide-react';
+import { ArrowRight, Sparkles, Award,  ChevronRight, ShieldCheck, Volume2, VolumeX } from 'lucide-react';
 import { heroContent } from '../../content/heroContent';
-import vvsVideo from '../../assets/video/vvs-video.mp4';
+const vvsVideo = "https://res.cloudinary.com/lskutfol/video/upload/v1785261069/vvs-video_qv5i2u.mp4";
 
 interface HeroProps {
   onApplyClick: () => void;
   onExploreClick: () => void;
-  onOpen360Tour?: () => void;
 }
 
-export const HeroSection: React.FC<HeroProps> = ({ onApplyClick, onExploreClick, onOpen360Tour }) => {
+export const HeroSection: React.FC<HeroProps> = ({ onApplyClick, onExploreClick }) => {
   const c = heroContent;
 
   // ── CURSOR RESPONSIVENESS & MOUSE PARALLAX STATE ──────────────────────────
@@ -119,15 +118,6 @@ export const HeroSection: React.FC<HeroProps> = ({ onApplyClick, onExploreClick,
                 {c.primaryButton} <ArrowRight size={18} />
               </button>
 
-              {onOpen360Tour && (
-                <button
-                  onClick={onOpen360Tour}
-                  className="w-full sm:w-auto px-7 py-3.5 rounded-2xl text-sm sm:text-base font-extrabold bg-white/10 hover:bg-white/20 text-white backdrop-blur-xl border border-white/20 shadow-xl hover:scale-[1.02] transition-all flex items-center justify-center gap-2 cursor-pointer"
-                >
-                  <Compass size={18} className="text-amber-400 animate-spin" /> 360° Virtual Tour
-                </button>
-              )}
-
               <button
                 onClick={onExploreClick}
                 className="w-full sm:w-auto px-5 py-3.5 rounded-2xl text-sm font-semibold text-slate-300 hover:text-white transition flex items-center justify-center gap-1 cursor-pointer"
@@ -185,15 +175,6 @@ export const HeroSection: React.FC<HeroProps> = ({ onApplyClick, onExploreClick,
                     <strong className="text-red-400">4K Interactive</strong>
                   </div>
                 </div>
-
-                {onOpen360Tour && (
-                  <button
-                    onClick={onOpen360Tour}
-                    className="w-full py-3 rounded-xl text-xs font-bold bg-gradient-to-r from-red-600 to-amber-600 text-white shadow-lg hover:shadow-red-600/30 transition flex items-center justify-center gap-2 cursor-pointer"
-                  >
-                    Launch 360° Campus Experience <ArrowRight size={14} />
-                  </button>
-                )}
               </div>
             </div>
           </div>

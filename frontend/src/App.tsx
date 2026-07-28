@@ -11,8 +11,6 @@ import { AdmissionsSection } from './components/admissions/AdmissionsSection';
 import { CampusSection } from './components/campus/CampusSection';
 import { NewsSection } from './components/news/NewsSection';
 import { ContactSection } from './components/contact/ContactSection';
-import { ERPDashboard } from './components/erp/ERPDashboard';
-import { VirtualTour360 } from './components/campus/VirtualTour360';
 import type { ERPUser } from './types';
 
 // ─── SCROLL HELPER ────────────────────────────────────────────────────────────
@@ -25,18 +23,17 @@ const scrollToSection = (id: string) => {
 
 export const App: React.FC = () => {
   const [isPortalOpen, setIsPortalOpen] = useState<boolean>(false);
-  const [is360TourOpen, setIs360TourOpen] = useState<boolean>(false);
-  const [erpUser, setErpUser] = useState<ERPUser | null>(null);
+  const [_erpUser, setErpUser] = useState<ERPUser | null>(null);
 
   // If user is currently logged into ERP, display the full ERP Dashboard
-  if (erpUser) {
+  /*if (erpUser) {
     return (
       <ERPDashboard
         user={erpUser}
         onLogout={() => setErpUser(null)}
       />
     );
-  }
+  }*/
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-950 text-slate-100 selection:bg-red-500 selection:text-white">
@@ -44,7 +41,6 @@ export const App: React.FC = () => {
       <Header
         scrollToSection={scrollToSection}
         onOpenPortal={() => setIsPortalOpen(true)}
-        onOpen360Tour={() => setIs360TourOpen(true)}
       />
 
       {/* ─── Main Content — All sections rendered together ────────────────── */}
@@ -53,18 +49,7 @@ export const App: React.FC = () => {
         <HeroSection
           onApplyClick={() => scrollToSection('admissions')}
           onExploreClick={() => scrollToSection('campus')}
-          onOpen360Tour={() => setIs360TourOpen(true)}
         />
-
-        {/* 360° Virtual Tour Section Banner (When Opened) */}
-        {is360TourOpen && (
-          <div id="3d-view-tour" className="bg-slate-950 border-y border-slate-800">
-            <VirtualTour360 onClose={() => setIs360TourOpen(false)} />
-          </div>
-        )}
-
-        {/* id="about" — About Us & Leadership Team Section */}
-        <AboutSection onExplore360={() => setIs360TourOpen(true)} />
 
         {/* id="highlights" — Why families choose Vasant Valley */}
         <HighlightsSection />
@@ -79,10 +64,13 @@ export const App: React.FC = () => {
         <AdmissionsSection />
 
         {/* id="campus" — Facility gallery */}
-        <CampusSection onOpen360Tour={() => setIs360TourOpen(true)} />
+        <CampusSection />
 
         {/* id="news" — Upcoming events & notices */}
         <NewsSection />
+
+        {/* id="about" — About Us & Leadership Team Section (2nd last before Footer) */}
+        <AboutSection />
 
         {/* id="contact" — Contact form & address */}
         <ContactSection />

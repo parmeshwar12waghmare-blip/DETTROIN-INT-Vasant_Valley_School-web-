@@ -16,10 +16,21 @@ import {
   ShieldCheck,
   Sparkles,
   Download,
-  Users
+  Users,
+  MessageSquare,
+  GraduationCap,
+  Mail,
+  Phone,
+  FileText
 } from 'lucide-react';
-import type { ERPUser, ERPQueryResult } from '../../types';
-import { queryERPDatabase, syncERPDatabase } from '../../services/api';
+import type { ERPUser, ERPQueryResult, ContactInquiry, AdmissionApplication } from '../../types';
+import {
+  queryERPDatabase,
+  syncERPDatabase,
+  fetchContactInquiries,
+  fetchAdmissionApplications,
+  fetchStudentsList
+} from '../../services/api';
 import { AdminUserPanel } from './AdminUserPanel';
 
 interface ERPDashboardProps {
@@ -28,9 +39,9 @@ interface ERPDashboardProps {
 }
 
 export const ERPDashboard: React.FC<ERPDashboardProps> = ({ user, onLogout }) => {
-  const [activeTab, setActiveTab] = useState<'overview' | 'queries' | 'academics' | 'fees' | 'timetable' | 'admin'>('overview');
-  const [activeRole, setActiveRole] = useState<'student' | 'parent' | 'teacher' | 'admin'>(user.role || 'student');
-  
+  const [activeTab, setActiveTab] = useState<'overview' | 'inquiries' | 'student_info' | 'queries' | 'academics' | 'fees' | 'timetable' | 'admin'>('overview');
+  const [activeRole, setActiveRole] = useState<'student' | 'parent' | 'teacher' | 'admin'>((user.role?.toLowerCase() as 'student' | 'parent' | 'teacher' | 'admin') || 'student');
+
   // Database Query State
   const [selectedQueryType, setSelectedQueryType] = useState<string>('academics');
   const [customQueryFilter, setCustomQueryFilter] = useState<string>('');
@@ -38,6 +49,48 @@ export const ERPDashboard: React.FC<ERPDashboardProps> = ({ user, onLogout }) =>
   const [isQuerying, setIsQuerying] = useState<boolean>(false);
   const [syncStatus, setSyncStatus] = useState<string>('Database Connected (MongoDB)');
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
+
+  // Student Enquiries & Student Info State (Admin & Teacher Only)
+  const [contactInquiries, setContactInquiries] = useState<ContactInquiry[]>([]);
+  const [admissionApplications, setAdmissionApplications] = useState<AdmissionApplication[]>([]);
+  const [studentsList, setStudentsList] = useState<any[]>([]);
+  const [isLoadingEnquiries, setIsLoadingEnquiries] = useState<boolean>(false);
+  const [isLoadingStudents, setIsLoadingStudents] = useState<boolean>(false);
+  const [searchEnquiry, setSearchEnquiry] = useState<string>('');
+  const [searchStudent, setSearchStudent] = useState<string>('');
+
+  // Is Authorized to view Student Enquiries & Info
+  const isAuthorizedStaff = activeRole === 'admin' || activeRole === 'teacher';
+
+  // Fetch Enquiries & Applications from DB
+  const loadEnquiries = async () => {
+    setIsLoadingEnquiries(true);
+    try {
+      const [contacts, admissions] = await Promise.all([
+        fetchContactInquiries(),
+        fetchAdmissionApplications()
+      ]);
+      setContactInquiries(contacts || []);
+      setAdmissionApplications(admissions || []);
+    } catch (err) {
+      console.error('Failed to load enquiries from database:', err);
+    } finally {
+      setIsLoadingEnquiries(false);
+    }
+  };
+
+  // Fetch Student Directory from DB
+  const loadStudents = async () => {
+    setIsLoadingStudents(true);
+    try {
+      const students = await fetchStudentsList();
+      setStudentsList(students || []);
+    } catch (err) {
+      console.error('Failed to load student info from database:', err);
+    } finally {
+      setIsLoadingStudents(false);
+    }
+  };
 
   // Run database query
   const handleExecuteQuery = async (type?: string) => {
@@ -60,6 +113,9 @@ export const ERPDashboard: React.FC<ERPDashboardProps> = ({ user, onLogout }) =>
       await syncERPDatabase();
       setSyncStatus('Database Re-synchronized at ' + new Date().toLocaleTimeString());
       await handleExecuteQuery();
+      if (isAuthorizedStaff) {
+        await Promise.all([loadEnquiries(), loadStudents()]);
+      }
     } catch (err) {
       setSyncStatus('Local Storage Sync Active');
     } finally {
@@ -69,7 +125,32 @@ export const ERPDashboard: React.FC<ERPDashboardProps> = ({ user, onLogout }) =>
 
   useEffect(() => {
     handleExecuteQuery('academics');
-  }, [user.portalId]);
+    if (isAuthorizedStaff) {
+      loadEnquiries();
+      loadStudents();
+    }
+  }, [user.portalId, activeRole]);
+
+  const filteredContacts = contactInquiries.filter(i =>
+    i.name?.toLowerCase().includes(searchEnquiry.toLowerCase()) ||
+    i.email?.toLowerCase().includes(searchEnquiry.toLowerCase()) ||
+    i.subject?.toLowerCase().includes(searchEnquiry.toLowerCase()) ||
+    i.message?.toLowerCase().includes(searchEnquiry.toLowerCase())
+  );
+
+  const filteredAdmissions = admissionApplications.filter(a =>
+    a.studentName?.toLowerCase().includes(searchEnquiry.toLowerCase()) ||
+    a.parentName?.toLowerCase().includes(searchEnquiry.toLowerCase()) ||
+    a.email?.toLowerCase().includes(searchEnquiry.toLowerCase()) ||
+    a.grade?.toLowerCase().includes(searchEnquiry.toLowerCase())
+  );
+
+  const filteredStudents = studentsList.filter(s =>
+    s.name?.toLowerCase().includes(searchStudent.toLowerCase()) ||
+    s.portalId?.toLowerCase().includes(searchStudent.toLowerCase()) ||
+    s.grade?.toLowerCase().includes(searchStudent.toLowerCase()) ||
+    s.rollNo?.toLowerCase().includes(searchStudent.toLowerCase())
+  );
 
   return (
     <div className="min-h-screen bg-slate-900 text-slate-100 flex flex-col font-sans">
@@ -86,18 +167,23 @@ export const ERPDashboard: React.FC<ERPDashboardProps> = ({ user, onLogout }) =>
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> Live DB Sync
               </span>
             </div>
-            <p className="text-xs text-slate-400 font-mono">ID: {user.portalId} • {user.name}</p>
+            <p className="text-xs text-slate-400 font-mono">ID: {user.portalId} • {user.name} ({activeRole})</p>
           </div>
         </div>
 
         <div className="flex items-center gap-3">
-          {/* Quick Role Switcher for Testing Demo */}
+          {/* Role Switcher */}
           <div className="hidden sm:flex items-center bg-slate-800/80 p-1 rounded-xl border border-slate-700">
             {(['student', 'parent', 'teacher', 'admin'] as const).map((r) => (
               <button
                 key={r}
-                onClick={() => setActiveRole(r)}
-                className={`px-3 py-1 rounded-lg text-xs font-semibold capitalize transition ${
+                onClick={() => {
+                  setActiveRole(r);
+                  if (!('admin' === r || 'teacher' === r) && (activeTab === 'inquiries' || activeTab === 'student_info' || activeTab === 'admin')) {
+                    setActiveTab('overview');
+                  }
+                }}
+                className={`px-3 py-1 rounded-lg text-xs font-semibold capitalize transition cursor-pointer ${
                   activeRole === r
                     ? 'bg-red-600 text-white shadow-md'
                     : 'text-slate-400 hover:text-slate-200'
@@ -126,12 +212,16 @@ export const ERPDashboard: React.FC<ERPDashboardProps> = ({ user, onLogout }) =>
           </div>
 
           {[
-            { id: 'overview',  label: 'Dashboard Overview',       icon: User },
-            { id: 'queries',   label: 'Database & Queries',        icon: Database },
-            { id: 'academics', label: 'Academic Grades',           icon: Award },
-            { id: 'fees',      label: 'Fee Payments & Sync',       icon: CreditCard },
-            { id: 'timetable', label: 'Class Timetable',           icon: Calendar },
-            ...(user.role === 'admin' ? [{ id: 'admin', label: 'User Management', icon: Users }] : []),
+            { id: 'overview',     label: 'Dashboard Overview',            icon: User },
+            ...(isAuthorizedStaff ? [
+              { id: 'inquiries',  label: 'Student Enquiries',             icon: MessageSquare },
+              { id: 'student_info',label: 'Student Directory & Info',     icon: GraduationCap }
+            ] : []),
+            { id: 'queries',      label: 'Database & Queries',            icon: Database },
+            { id: 'academics',    label: 'Academic Grades',               icon: Award },
+            { id: 'fees',         label: 'Fee Payments & Sync',           icon: CreditCard },
+            { id: 'timetable',    label: 'Class Timetable',               icon: Calendar },
+            ...(activeRole === 'admin' ? [{ id: 'admin', label: 'User Management', icon: Users }] : []),
           ].map((item) => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
@@ -172,6 +262,7 @@ export const ERPDashboard: React.FC<ERPDashboardProps> = ({ user, onLogout }) =>
 
         {/* Dynamic Content Panel */}
         <main className="flex-1 p-4 md:p-8 space-y-6 overflow-y-auto">
+
           {/* ── TAB 1: OVERVIEW ──────────────────────────────────────────────── */}
           {activeTab === 'overview' && (
             <div className="space-y-6">
@@ -181,7 +272,7 @@ export const ERPDashboard: React.FC<ERPDashboardProps> = ({ user, onLogout }) =>
                 <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                   <div className="space-y-2">
                     <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-red-500/10 text-red-400 border border-red-500/20">
-                      <Sparkles size={12} /> Active ERP Session
+                      <Sparkles size={12} /> Active ERP Session ({activeRole.toUpperCase()})
                     </span>
                     <h2 className="text-2xl sm:text-3xl font-extrabold text-white">
                       Welcome back, {user.name}!
@@ -189,8 +280,8 @@ export const ERPDashboard: React.FC<ERPDashboardProps> = ({ user, onLogout }) =>
                     <p className="text-sm text-slate-400">
                       {activeRole === 'student' && `Grade: ${user.grade} • Roll No: ${user.rollNo}`}
                       {activeRole === 'parent' && `Parent Portal Access • Student Ward: Aarav (${user.grade})`}
-                      {activeRole === 'teacher' && `Faculty Portal • Department: Senior Mathematics`}
-                      {activeRole === 'admin' && `Super Admin Console • Database Query Control Enabled`}
+                      {activeRole === 'teacher' && `Faculty Portal • Authorized for Student Enquiries & Info`}
+                      {activeRole === 'admin' && `Super Admin Console • Authorized for All Student Database Access`}
                     </p>
                   </div>
                   <div className="flex items-center gap-3">
@@ -230,11 +321,11 @@ export const ERPDashboard: React.FC<ERPDashboardProps> = ({ user, onLogout }) =>
 
                 <div className="p-5 rounded-2xl bg-slate-800/40 border border-slate-700/60 space-y-2">
                   <div className="flex items-center justify-between text-slate-400 text-xs font-medium">
-                    <span>Database Queries</span>
+                    <span>Database Status</span>
                     <Database size={16} className="text-sky-400" />
                   </div>
-                  <p className="text-2xl font-bold text-white">100% Synced</p>
-                  <p className="text-[11px] text-slate-400 font-mono">Latency: 4ms</p>
+                  <p className="text-2xl font-bold text-white">MongoDB Live</p>
+                  <p className="text-[11px] text-slate-400 font-mono">Fetched from Database</p>
                 </div>
 
                 <div className="p-5 rounded-2xl bg-slate-800/40 border border-slate-700/60 space-y-2">
@@ -275,7 +366,200 @@ export const ERPDashboard: React.FC<ERPDashboardProps> = ({ user, onLogout }) =>
             </div>
           )}
 
-          {/* ── TAB 2: DATABASE & QUERIES ────────────────────────────────────── */}
+          {/* ── TAB: STUDENT ENQUIRIES (ADMIN & TEACHER ONLY) ────────────────── */}
+          {activeTab === 'inquiries' && isAuthorizedStaff && (
+            <div className="space-y-6">
+              <div className="p-6 rounded-3xl bg-slate-950 border border-slate-800 space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div>
+                    <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                      <MessageSquare size={20} className="text-red-500" /> Student Enquiries & Admission Applications
+                    </h3>
+                    <p className="text-xs text-slate-400 mt-1">
+                      Showing contact inquiries and student registration applications stored directly in the database.
+                    </p>
+                  </div>
+                  <button
+                    onClick={loadEnquiries}
+                    disabled={isLoadingEnquiries}
+                    className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 transition cursor-pointer"
+                  >
+                    <RefreshCw size={14} className={isLoadingEnquiries ? 'animate-spin' : ''} />
+                    Refresh Database Records
+                  </button>
+                </div>
+
+                {/* Filter input */}
+                <div className="relative">
+                  <Search size={16} className="absolute left-3.5 top-3 text-slate-500" />
+                  <input
+                    type="text"
+                    value={searchEnquiry}
+                    onChange={(e) => setSearchEnquiry(e.target.value)}
+                    placeholder="Search student enquiries by name, email, subject, or class..."
+                    className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-red-500"
+                  />
+                </div>
+              </div>
+
+              {/* Admission Applications Section */}
+              <div className="p-6 rounded-2xl bg-slate-800/30 border border-slate-800 space-y-4">
+                <h4 className="text-base font-bold text-white flex items-center gap-2">
+                  <FileText size={18} className="text-amber-400" /> Online Admission Applications ({filteredAdmissions.length})
+                </h4>
+                {filteredAdmissions.length === 0 ? (
+                  <p className="text-xs text-slate-500 py-4 text-center">No admission applications found in database.</p>
+                ) : (
+                  <div className="space-y-3">
+                    {filteredAdmissions.map((app, idx) => (
+                      <div key={app.id || idx} className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 space-y-2">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between text-xs gap-2">
+                          <div className="font-bold text-white text-sm">
+                            Student: {app.studentName} <span className="text-xs font-normal text-amber-400">({app.grade})</span>
+                          </div>
+                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                            Status: {app.status || 'Pending Review'}
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs text-slate-400">
+                          <div className="flex items-center gap-1">
+                            <User size={12} className="text-slate-500" /> Parent: {app.parentName}
+                          </div>
+                          <div className="flex items-center gap-1 font-mono">
+                            <Mail size={12} className="text-slate-500" /> {app.email}
+                          </div>
+                          <div className="flex items-center gap-1 font-mono">
+                            <Phone size={12} className="text-slate-500" /> {app.phone}
+                          </div>
+                        </div>
+                        {app.previousSchool && (
+                          <p className="text-xs text-slate-400">Previous School: {app.previousSchool}</p>
+                        )}
+                        {app.message && (
+                          <p className="text-xs text-slate-300 bg-slate-950 p-2.5 rounded-lg border border-slate-800 mt-1">
+                            "{app.message}"
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* General Contact Enquiries Section */}
+              <div className="p-6 rounded-2xl bg-slate-800/30 border border-slate-800 space-y-4">
+                <h4 className="text-base font-bold text-white flex items-center gap-2">
+                  <Mail size={18} className="text-red-400" /> General Website Enquiries ({filteredContacts.length})
+                </h4>
+                {filteredContacts.length === 0 ? (
+                  <p className="text-xs text-slate-500 py-4 text-center">No contact inquiries found in database.</p>
+                ) : (
+                  <div className="space-y-3">
+                    {filteredContacts.map((inq, idx) => (
+                      <div key={idx} className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 space-y-2">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between text-xs gap-2">
+                          <div className="font-bold text-white text-sm">
+                            {inq.name} <span className="text-xs font-mono font-normal text-slate-400">({inq.email})</span>
+                          </div>
+                          <span className="text-slate-500 font-mono">{inq.phone}</span>
+                        </div>
+                        <p className="text-xs font-bold text-red-400">Subject: {inq.subject}</p>
+                        <p className="text-xs text-slate-300 bg-slate-950 p-2.5 rounded-lg border border-slate-800">
+                          "{inq.message}"
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* ── TAB: STUDENT DIRECTORY & INFO (ADMIN & TEACHER ONLY) ─────────── */}
+          {activeTab === 'student_info' && isAuthorizedStaff && (
+            <div className="space-y-6">
+              <div className="p-6 rounded-3xl bg-slate-950 border border-slate-800 space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div>
+                    <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                      <GraduationCap size={20} className="text-red-500" /> Student Information & Database Records
+                    </h3>
+                    <p className="text-xs text-slate-400 mt-1">
+                      Complete student directory, grades, attendance, and fee status stored in database.
+                    </p>
+                  </div>
+                  <button
+                    onClick={loadStudents}
+                    disabled={isLoadingStudents}
+                    className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 transition cursor-pointer"
+                  >
+                    <RefreshCw size={14} className={isLoadingStudents ? 'animate-spin' : ''} />
+                    Refresh Student DB
+                  </button>
+                </div>
+
+                <div className="relative">
+                  <Search size={16} className="absolute left-3.5 top-3 text-slate-500" />
+                  <input
+                    type="text"
+                    value={searchStudent}
+                    onChange={(e) => setSearchStudent(e.target.value)}
+                    placeholder="Search student info by name, portal ID, class, or roll number..."
+                    className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-red-500"
+                  />
+                </div>
+              </div>
+
+              {/* Student Cards Grid */}
+              {isLoadingStudents ? (
+                <div className="py-12 text-center text-slate-400">
+                  <RefreshCw size={24} className="animate-spin mx-auto mb-2" /> Fetching student records from database...
+                </div>
+              ) : filteredStudents.length === 0 ? (
+                <div className="py-12 text-center text-slate-500">
+                  <GraduationCap size={36} className="mx-auto mb-2 opacity-30" />
+                  <p>No student information records found.</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {filteredStudents.map((st, idx) => (
+                    <div key={st.portalId || idx} className="p-5 rounded-2xl bg-slate-800/40 border border-slate-700/60 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h4 className="text-base font-bold text-white">{st.name}</h4>
+                          <p className="text-xs text-slate-400 font-mono">ID: {st.portalId} • Roll: {st.rollNo || 'N/A'}</p>
+                        </div>
+                        <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-red-500/20 text-red-300 border border-red-500/30">
+                          {st.grade || 'Class X-A'}
+                        </span>
+                      </div>
+
+                      <div className="space-y-1.5 text-xs text-slate-300 border-t border-b border-slate-800 py-2.5">
+                        <div className="flex justify-between">
+                          <span className="text-slate-400">Parent/Guardian:</span>
+                          <span className="font-semibold">{st.parentName || 'N/A'}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-slate-400">Email Contact:</span>
+                          <span className="font-mono text-slate-200">{st.email}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-slate-400">Attendance Rate:</span>
+                          <span className="font-bold text-emerald-400">{st.attendanceRate || 96.5}%</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-slate-400">Fee Clearance:</span>
+                          <span className="font-bold text-amber-400">{st.feeStatus || 'Paid'}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ── TAB: DATABASE & QUERIES ────────────────────────────────────── */}
           {activeTab === 'queries' && (
             <div className="space-y-6">
               <div className="p-6 rounded-3xl bg-slate-950 border border-slate-800 space-y-4">
@@ -388,7 +672,7 @@ export const ERPDashboard: React.FC<ERPDashboardProps> = ({ user, onLogout }) =>
             </div>
           )}
 
-          {/* ── TAB 3: ACADEMICS ────────────────────────────────────────────── */}
+          {/* ── TAB: ACADEMICS ────────────────────────────────────────────── */}
           {activeTab === 'academics' && (
             <div className="space-y-6">
               <div className="flex items-center justify-between">
@@ -396,7 +680,7 @@ export const ERPDashboard: React.FC<ERPDashboardProps> = ({ user, onLogout }) =>
                   <h3 className="text-xl font-bold text-white">Term 1 Report Card & Grade Breakdown</h3>
                   <p className="text-xs text-slate-400">Class X-A • Academic Session 2026</p>
                 </div>
-                <button className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 transition">
+                <button className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 transition cursor-pointer">
                   <Download size={14} /> Download PDF
                 </button>
               </div>
@@ -431,7 +715,7 @@ export const ERPDashboard: React.FC<ERPDashboardProps> = ({ user, onLogout }) =>
             </div>
           )}
 
-          {/* ── TAB 4: FEES ─────────────────────────────────────────────────── */}
+          {/* ── TAB: FEES ─────────────────────────────────────────────────── */}
           {activeTab === 'fees' && (
             <div className="space-y-6">
               <div className="p-6 rounded-3xl bg-slate-950 border border-slate-800 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -474,7 +758,7 @@ export const ERPDashboard: React.FC<ERPDashboardProps> = ({ user, onLogout }) =>
             </div>
           )}
 
-          {/* ── TAB 5: TIMETABLE ────────────────────────────────────────────── */}
+          {/* ── TAB: TIMETABLE ────────────────────────────────────────────── */}
           {activeTab === 'timetable' && (
             <div className="space-y-6">
               <div>
@@ -501,8 +785,8 @@ export const ERPDashboard: React.FC<ERPDashboardProps> = ({ user, onLogout }) =>
             </div>
           )}
 
-          {/* ── TAB 6: ADMIN USER MANAGEMENT (admin only) ─────────────────── */}
-          {activeTab === 'admin' && user.role === 'admin' && (
+          {/* ── TAB: ADMIN USER MANAGEMENT (ADMIN ONLY) ─────────────────── */}
+          {activeTab === 'admin' && activeRole === 'admin' && (
             <div className="space-y-6">
               <AdminUserPanel />
             </div>

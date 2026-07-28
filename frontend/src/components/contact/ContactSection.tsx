@@ -23,7 +23,8 @@ export const ContactSection: React.FC = () => {
     email: '',
     phone: '',
     subject: '',
-    message: ''
+    message: '',
+    inquiryType: 'General'
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -41,7 +42,7 @@ export const ContactSection: React.FC = () => {
     setIsSubmitting(false);
     setSubmissionStatus(res);
     if (res.success) {
-      setFormData({ name: '', email: '', phone: '', subject: '', message: '' });
+      setFormData({ name: '', email: '', phone: '', subject: '', message: '', inquiryType: 'General' });
     }
   };
 

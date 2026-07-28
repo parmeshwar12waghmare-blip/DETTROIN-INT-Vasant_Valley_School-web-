@@ -283,4 +283,49 @@ router.post('/sync', async (req, res) => {
   }
 });
 
+// GET /api/erp/users — Retrieve all ERP users
+router.get('/users', async (req, res) => {
+  try {
+    await connectToDatabase();
+    const users = await ERPUser.find().sort({ createdAt: -1 });
+    res.json({ success: true, users });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to fetch users', error: error.message });
+  }
+});
+
+// POST /api/erp/users — Create a new ERP user
+router.post('/users', async (req, res) => {
+  try {
+    await connectToDatabase();
+    const newUser = new ERPUser(req.body);
+    await newUser.save();
+    res.status(201).json({ success: true, message: 'User account created successfully', user: newUser });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to create user account', error: error.message });
+  }
+});
+
+// GET /api/erp/students — Retrieve student list for Admin & Teacher views
+router.get('/students', async (req, res) => {
+  try {
+    await connectToDatabase();
+    const students = await ERPUser.find({ role: 'student' }).sort({ name: 1 });
+    res.json({ success: true, students });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to fetch student directory', error: error.message });
+  }
+});
+
+// DELETE /api/erp/users/:id — Delete an ERP user account
+router.delete('/users/:id', async (req, res) => {
+  try {
+    await connectToDatabase();
+    await ERPUser.findByIdAndDelete(req.params.id);
+    res.json({ success: true, message: 'User account deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to delete user account', error: error.message });
+  }
+});
+
 module.exports = router;

@@ -8,7 +8,8 @@ services:
     runtime: node
     rootDir: backend
     buildCommand: npm install
-    startCommand: npm start
+    startCommand: node server.js
+    plan: free
     envVars:
       - key: MONGODB_URI
         sync: false          # Set this manually in the Render dashboard
@@ -18,5 +19,9 @@ services:
         value: production
       - key: ALLOWED_ORIGIN
         sync: false          # Set to your Vercel frontend URL, e.g. https://your-app.vercel.app
+      - key: INSTAGRAM_ACCESS_TOKEN
+        sync: false          # Optional: Instagram Graph API token
+      - key: INSTAGRAM_USER_ID
+        sync: false          # Optional: Instagram user ID
     healthCheckPath: /api/health
     autoDeploy: true
