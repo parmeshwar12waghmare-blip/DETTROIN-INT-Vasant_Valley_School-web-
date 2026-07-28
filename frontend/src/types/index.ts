@@ -95,3 +95,26 @@ export interface ERPQueryResult {
   executionTimeMs: number;
   data: any[];
 }
+
+// ─── FIREBASE USER PROFILE ────────────────────────────────────────────────────
+export interface FirebaseUserProfile {
+  id?: string;
+  uid?: string;
+  portalId: string;
+  name: string;
+  email: string;
+  role: 'student' | 'parent' | 'teacher' | 'admin';
+  grade?: string;
+  rollNo?: string;
+  parentName?: string;
+  department?: string;
+  phone?: string;
+  photoURL?: string;
+  isActive: boolean;
+  createdAt?: any;
+  updatedAt?: any;
+  lastSeen?: string;
+  suspendedAt?: any;
+  linkedStudentId?: string;
+}
+
