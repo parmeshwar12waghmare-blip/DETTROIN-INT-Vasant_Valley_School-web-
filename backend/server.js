@@ -111,7 +111,7 @@ app.delete('/api/contact/:id', async (req, res) => {
 
 console.log("MONGODB_URI:", process.env.MONGODB_URI ? "Found" : "Missing");
 console.log("PORT:", process.env.PORT);
----
+
 
 // Always start the server (Render and other hosts need the process to bind to PORT)
 app.listen(PORT, () => {
