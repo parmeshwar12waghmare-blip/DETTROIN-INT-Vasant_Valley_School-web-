@@ -10,7 +10,14 @@ const erpRoutes = require('./routes/erpRoutes');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-app.use(cors());
+// ─── CORS ─────────────────────────────────────────────────────────────────────
+// Allow requests from the Vercel frontend. Set ALLOWED_ORIGIN in Render env vars.
+const corsOptions = {
+  origin: process.env.ALLOWED_ORIGIN ? process.env.ALLOWED_ORIGIN.split(',') : '*',
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+};
+app.use(cors(corsOptions));
 app.use(express.json());
 
 // ERP Routes
@@ -59,11 +66,9 @@ app.post('/api/contact', async (req, res) => {
   }
 });
 
-// For Vercel Serverless Export & Local Express execution
-if (process.env.NODE_ENV !== 'production') {
-  app.listen(PORT, () => {
-    console.log(`Vasant Valley School Backend running on http://localhost:${PORT}`);
-  });
-}
+// Always start the server (Render and other hosts need the process to bind to PORT)
+app.listen(PORT, () => {
+  console.log(`Vasant Valley School Backend running on http://localhost:${PORT}`);
+});
 
 module.exports = app;

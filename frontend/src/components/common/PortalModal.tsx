@@ -4,7 +4,7 @@
 // Falls back to mock session if Firebase is not yet configured.
 
 import React, { useState } from 'react';
-import { X, Lock, LogIn, Sparkles, Chrome, Mail, AlertCircle, Eye, EyeOff } from 'lucide-react';
+import { X, Lock, LogIn, Sparkles, Mail, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { signInWithEmail, signInWithGoogle, getAuthErrorMessage } from '../../firebase/authService';
 import { loginERP } from '../../services/api';
 import type { ERPUser } from '../../types';

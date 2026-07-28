@@ -14,8 +14,6 @@ import {
   Play,
   Clock,
   ShieldCheck,
-  FileText,
-  ChevronRight,
   Sparkles,
   Download,
   Users

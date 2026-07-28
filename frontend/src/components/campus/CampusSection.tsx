@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Eye, Compass } from 'lucide-react';
+import { Eye } from 'lucide-react';
 import { campusContent } from '../../content/campusContent';
 
 interface CampusProps {

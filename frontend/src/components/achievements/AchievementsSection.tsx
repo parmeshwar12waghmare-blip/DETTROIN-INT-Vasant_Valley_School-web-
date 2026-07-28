@@ -8,7 +8,7 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 import { achievementsContent } from '../../content/achievementsContent';
-import type { StudentAchievement, SchoolAchievement, UniversityAcceptance } from '../../content/achievementsContent';
+// Types imported inline where needed
 
 export const AchievementsSection: React.FC = () => {
   const c = achievementsContent;

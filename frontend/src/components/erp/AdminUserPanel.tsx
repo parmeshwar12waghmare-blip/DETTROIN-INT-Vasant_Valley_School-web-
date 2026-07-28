@@ -5,9 +5,9 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import {
-  Users, UserPlus, ShieldCheck, ShieldOff, Mail, RefreshCw,
-  Database, CheckCircle, XCircle, AlertTriangle, Search,
-  ChevronDown, Eye, Lock, Unlock
+  Users, UserPlus, ShieldCheck, Mail, RefreshCw,
+  Database, CheckCircle, AlertTriangle, Search,
+  Lock, Unlock
 } from 'lucide-react';
 import {
   getAllUsers,

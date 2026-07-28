@@ -21,7 +21,7 @@ interface VirtualTour360Props {
 }
 
 export const VirtualTour360: React.FC<VirtualTour360Props> = ({
-  isOpen = true,
+  isOpen: _isOpen = true,
   onClose,
   initialPath = '/3d-view/main-campus'
 }) => {
