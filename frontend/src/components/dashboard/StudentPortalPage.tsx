@@ -1,6 +1,6 @@
 import React from 'react';
-import type { ApplicationItem } from '../services/erpApi';
-import { StudentProfileView } from '../components/erp/StudentProfileView';
+import type { ApplicationItem } from '../../services/erpApi';
+import { StudentProfileView } from '../../components/erp/StudentProfileView';
 
 interface StudentPortalPageProps {
   applications: ApplicationItem[];

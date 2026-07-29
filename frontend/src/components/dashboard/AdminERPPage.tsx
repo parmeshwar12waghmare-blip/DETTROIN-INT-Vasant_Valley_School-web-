@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import type { InquiryItem, ApplicationItem, StudentUser } from '../services/erpApi';
-import { EnquiriesList } from '../components/erp/EnquiriesList';
-import { OnlineApplications } from '../components/erp/OnlineApplications';
-import { StudentManager } from '../components/erp/StudentManager';
+import type { InquiryItem, ApplicationItem, StudentUser } from '../../services/erpApi';
+import { EnquiriesList } from '../erp/EnquiriesList';
+import { OnlineApplications } from '../erp/OnlineApplications';
+import { StudentManager } from '../erp/StudentManager';
 import { Mail, FileText, Users } from 'lucide-react';
 
 interface AdminERPPageProps {

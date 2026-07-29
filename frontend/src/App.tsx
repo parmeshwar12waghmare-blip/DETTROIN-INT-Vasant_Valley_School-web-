@@ -11,7 +11,7 @@ import { AdmissionsSection } from './components/admissions/AdmissionsSection';
 import { CampusSection } from './components/campus/CampusSection';
 import { NewsSection } from './components/news/NewsSection';
 import { ContactSection } from './components/contact/ContactSection';
-import { ERPPage } from './pages/ERPPage';
+
 import type { ERPUser } from './types';
 
 // ─── SCROLL HELPER ────────────────────────────────────────────────────────────
@@ -76,8 +76,7 @@ export const App: React.FC = () => {
         {/* id="contact" — Contact form & address */}
         <ContactSection />
 
-        {/* ERP Section — Full Admin, Teacher, and Student ERP Portal */}
-        <ERPPage />
+        
       </main>
 
       {/* ─── Footer ──────────────────────────────────────────────────────────── */}

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { erpApi } from '../services/erpApi';
-import type { InquiryItem, ApplicationItem, StudentUser } from '../services/erpApi';
+import { erpApi } from '../../services/erpApi';
+import type { InquiryItem, ApplicationItem, StudentUser } from '../../services/erpApi';
 import { AdminERPPage } from './AdminERPPage';
 import { TeacherERPPage } from './TeacherERPPage';
 import { StudentPortalPage } from './StudentPortalPage';

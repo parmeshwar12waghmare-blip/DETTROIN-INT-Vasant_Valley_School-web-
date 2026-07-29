@@ -1,6 +1,6 @@
 import React from 'react';
-import type { StudentUser } from '../services/erpApi';
-import { StudentManager } from '../components/erp/StudentManager';
+import type { StudentUser } from '../../services/erpApi';
+import { StudentManager } from '../../components/erp/StudentManager';
 import { ShieldAlert } from 'lucide-react';
 
 interface TeacherERPPageProps {
